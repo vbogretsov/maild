@@ -3,6 +3,8 @@ package maild
 
 import (
 	"bytes"
+	"errors"
+	"sync"
 	"text/template"
 
 	"gopkg.in/yaml.v2"
@@ -44,16 +46,33 @@ type Provider interface {
 type maildServer struct {
 	templateLoader TemplateLoader
 	provider       Provider
+	mutex          sync.RWMutex
+	templatesCache map[string]*template.Template
 }
 
 func (server *maildServer) Send(md MailData) error {
-	template, err := server.templateLoader.Load(md.Lang, md.TemplateID)
-	if err != nil {
-		return err
+	templateKey := md.Lang + md.TemplateID
+	var template *template.Template
+
+	server.mutex.RLock()
+	template, ok := server.templatesCache[templateKey]
+	server.mutex.RUnlock()
+
+	if !ok {
+		tmpl, err := server.templateLoader.Load(md.Lang, md.TemplateID)
+		if err != nil {
+			return err
+		}
+
+		server.mutex.Lock()
+		server.templatesCache[templateKey] = tmpl
+		server.mutex.Unlock()
+
+		template = tmpl
 	}
 
 	buf := bytes.Buffer{}
-	err = template.Execute(&buf, md.Args)
+	err := template.Execute(&buf, md.Args)
 	if err != nil {
 		return err
 	}
@@ -72,5 +91,7 @@ func NewSender(templateLoader TemplateLoader, provider Provider) Sender {
 	return &maildServer{
 		templateLoader: templateLoader,
 		provider:       provider,
+		mutex:          sync.RWMutex{},
+		templatesCache: map[string]*template.Template{},
 	}
 }
