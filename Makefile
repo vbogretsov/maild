@@ -12,10 +12,19 @@ all: build
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
-
-build: $(BINDIR)
+deps:
 	$(GO) get -d ./...
+
+
+maild: $(BINDIR) deps
 	$(GO) build -o $(BINDIR)/maild ./cmd/maild
+
+mailcd: $(BINDIR) deps
+	$(GO) build -o $(BINDIR)/mailcd ./cmd/mailcd
+
+
+build: maild mailcd
+
 
 
 clean:
