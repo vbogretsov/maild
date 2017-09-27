@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"net/rpc"
 	"os"
+	"time"
 
+	"github.com/op/go-logging"
 	"github.com/streadway/amqp"
 	"github.com/urfave/cli"
 	"github.com/vbogretsov/amqprpc"
-	"gopkg.in/go-playground/validator.v9"
-	"gopkg.in/mcuadros/go-defaults.v1"
 
 	"github.com/vbogretsov/maild"
 	"github.com/vbogretsov/maild/provider"
@@ -20,70 +19,12 @@ const (
 	name    = "maild"
 	usage   = "notification service for micro service architecture"
 	version = "0.0.0"
+	logfmt  = `%{color}#%{id:03x} [%{pid}]%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{message}%{color:reset}`
 )
 
-type conf struct {
-	Provider         string `validate:"required" default:"sendgrid"`
-	ProviderEndpoint string `validate:"required"`
-	AMQPUrl          string `default:"amqp://localhost:5672"`
-	LogLevel         string `validate:"required" default:"INFO"`
-	TemplatesDir     string `validate:"required" default:"./templates"`
-	Routing          string `validate:"required" default: "maild"`
-}
-
-func newConf(app *cli.App) *conf {
-	var cfg conf
-	defaults.SetDefaults(&cfg)
-
-	if app == nil {
-		return &cfg
-	}
-
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:        "provider",
-			Value:       cfg.Provider,
-			Usage:       "SMTP provider name, allowed values: sendgrid",
-			Destination: &cfg.Provider,
-		},
-		cli.StringFlag{
-			Name:        "provider-endpoint",
-			Value:       cfg.ProviderEndpoint,
-			Usage:       "Provider connection information",
-			Destination: &cfg.ProviderEndpoint,
-		},
-		cli.StringFlag{
-			Name:        "amqp-url",
-			Value:       cfg.AMQPUrl,
-			Usage:       "AMQP broker URL, ignored if protocol is HTTP",
-			Destination: &cfg.AMQPUrl,
-		},
-		cli.StringFlag{
-			Name:        "routing",
-			Value:       cfg.Routing,
-			Usage:       "AMQP routing key",
-			Destination: &cfg.Routing,
-		},
-		cli.StringFlag{
-			Name:        "log-level",
-			Value:       cfg.LogLevel,
-			Usage:       "Log level, allowed values: [INFO, WARNING, ERROR, DEBUG]",
-			Destination: &cfg.LogLevel,
-		},
-		cli.StringFlag{
-			Name:        "templates-dir",
-			Value:       cfg.TemplatesDir,
-			Usage:       "Templates directory path",
-			Destination: &cfg.TemplatesDir,
-		},
-	}
-
-	return &cfg
-}
-
-func (c *conf) Validate() error {
-	return validator.New().Struct(c)
-}
+var (
+	log = logging.MustGetLogger(name)
+)
 
 // Maild is the maild.Sender RPC implementation.
 type Maild struct {
@@ -96,6 +37,8 @@ func (server *Maild) Send(md maild.MailData, out *int) error {
 }
 
 func run(cfg *conf) error {
+	log.Info("connecting AMQP")
+
 	conn, err := amqp.Dial(cfg.AMQPUrl)
 	if err != nil {
 		return err
@@ -108,7 +51,6 @@ func run(cfg *conf) error {
 	}
 
 	provider := provider.NewConsolePorovider()
-
 	sender := maild.NewSender(templateStore, provider)
 	server := Maild{sender}
 
@@ -133,17 +75,23 @@ func createApp() *cli.App {
 }
 
 func main() {
+	logging.SetBackend(logging.NewLogBackend(os.Stderr, "", 0))
+
 	app := createApp()
 	cfg := newConf(app)
 
 	app.Action = func(c *cli.Context) {
 		if err := cfg.Validate(); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(2)
+			log.Fatalf("error: %v", err)
 		}
-		if err := run(cfg); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
+
+		logging.SetFormatter(logging.MustStringFormatter(logfmt))
+
+		for {
+			if err := run(cfg); err != nil {
+				log.Errorf("AMQP connection failed %v", err)
+			}
+			time.Sleep(time.Second * 1)
 		}
 	}
 

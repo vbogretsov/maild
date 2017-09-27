@@ -3,7 +3,6 @@ package maild
 
 import (
 	"bytes"
-	"errors"
 	"sync"
 	"text/template"
 
@@ -39,8 +38,8 @@ type TemplateLoader interface {
 }
 
 // A Provider implements sending email message.
-type Provider interface {
-	Send(msg Message) error
+type SMTPProvider interface {
+	Sendmail(msg Message) error
 }
 
 type maildServer struct {
