@@ -4,3 +4,7 @@ services:
     image: "tfsoares/sendgrid-mock"
     ports:
       - "3000:3000"
+  rabbitmq:
+    image: "rabbitmq:3.6-alpine"
+    ports:
+      - "5672:5672"

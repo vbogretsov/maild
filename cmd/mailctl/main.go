@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	Name    = "maild"
-	Usage   = "notification service for micro service architecture"
-	Version = "0.0.0"
+	name    = "mailctl"
+	usage   = "notification service control"
+	version = "0.0.0"
 )
 
 func newApp() *cli.App {
@@ -22,11 +22,6 @@ func newApp() *cli.App {
 
 func main() {
 	app := newApp()
-	cfg := newConf(app)
-
-	app.Action = func(ctx *cli.Context) {
-
-	}
-
+	newConf(app)
 	app.Run(os.Args)
 }

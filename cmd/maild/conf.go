@@ -6,18 +6,17 @@ import (
 	"gopkg.in/mcuadros/go-defaults.v1"
 )
 
-type Conf struct {
+type conf struct {
 	Provider         string `validate:"required" default:"sendgrid"`
 	ProviderEndpoint string `validate:"required"`
-	Protocol         string `validate:"required" default:"amqp"`
-	HTTPPort         string `default:"50101"`
-	AMQPUrl          string `default:"localhost:5672"`
+	AMQPUrl          string `default:"amqp://localhost:5672"`
 	LogLevel         string `validate:"required" default:"INFO"`
 	TemplatesDir     string `validate:"required" default:"./templates"`
+	Routing          string `validate:"required" default: "maild"`
 }
 
-func New(app *cli.App) *Conf {
-	var cfg Conf
+func newConf(app *cli.App) *conf {
+	var cfg conf
 	defaults.SetDefaults(&cfg)
 
 	if app == nil {
@@ -38,25 +37,19 @@ func New(app *cli.App) *Conf {
 			Destination: &cfg.ProviderEndpoint,
 		},
 		cli.StringFlag{
-			Name:        "http-port",
-			Value:       cfg.HTTPPort,
-			Usage:       "HTTP service port number, ignored if protocol is AMQP",
-			Destination: &cfg.HTTPPort,
-		},
-		cli.StringFlag{
 			Name:        "amqp-url",
 			Value:       cfg.AMQPUrl,
 			Usage:       "AMQP broker URL, ignored if protocol is HTTP",
 			Destination: &cfg.AMQPUrl,
 		},
 		cli.StringFlag{
-			Name:        "protocol",
-			Value:       cfg.Protocol,
-			Usage:       "Service protocol name, allowed values: [HTTP, AMQP]",
-			Destination: &cfg.Protocol,
+			Name:        "routing",
+			Value:       cfg.Routing,
+			Usage:       "AMQP routing key",
+			Destination: &cfg.Routing,
 		},
 		cli.StringFlag{
-			Name:        "log-levle",
+			Name:        "log-level",
 			Value:       cfg.LogLevel,
 			Usage:       "Log level, allowed values: [INFO, WARNING, ERROR, DEBUG]",
 			Destination: &cfg.LogLevel,
@@ -72,6 +65,6 @@ func New(app *cli.App) *Conf {
 	return &cfg
 }
 
-func (c *Conf) Validate() error {
+func (c *conf) Validate() error {
 	return validator.New().Struct(c)
 }
