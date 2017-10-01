@@ -24,8 +24,19 @@ func main() {
 	app := newApp()
 	cfg := newConf(app)
 
-	app.Action = func(ctx *cli.Context) {
+	app.Action = func(c *cli.Context) {
+		if err := cfg.Validate(); err != nil {
+			log.Fatalf("error: %v", err)
+		}
 
+		logging.SetFormatter(logging.MustStringFormatter(logfmt))
+
+		for {
+			if err := run(cfg); err != nil {
+				log.Errorf("AMQP connection failed %v", err)
+			}
+			time.Sleep(time.Second * 1)
+		}
 	}
 
 	app.Run(os.Args)
