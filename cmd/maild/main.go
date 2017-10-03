@@ -2,15 +2,26 @@ package main
 
 import (
 	"os"
+	"time"
 
+	"github.com/op/go-logging"
 	"github.com/urfave/cli"
 )
 
 const (
-	Name    = "maild"
-	Usage   = "notification service for micro service architecture"
-	Version = "0.0.0"
+	name    = "maild"
+	usage   = "notification service for micro service architecture"
+	version = "0.0.0"
+	logfmt  = `%{color}#%{id:03x} [%{pid}]%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{message}%{color:reset}`
 )
+
+var (
+	log = logging.MustGetLogger(name)
+)
+
+func init() {
+	logging.SetBackend(logging.NewLogBackend(os.Stderr, "", 0))
+}
 
 func newApp() *cli.App {
 	app := cli.NewApp()
@@ -30,6 +41,7 @@ func main() {
 		}
 
 		logging.SetFormatter(logging.MustStringFormatter(logfmt))
+		// TODO(vbogretsov): set log level
 
 		for {
 			if err := run(cfg); err != nil {

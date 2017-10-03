@@ -36,26 +36,33 @@ type conf struct {
 	Upload uploadConf
 }
 
-func (c *commonConf) Validate() {
+func (c *conf) validate() {
 	if err := valid.Struct(c); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(2)
 	}
 }
 
-func (c *sendConf) Validate() {
-	if err := valid.Struct(c); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(2)
-	}
-}
+// func (c *commonConf) Validate() {
+// 	if err := valid.Struct(c); err != nil {
+// 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+// 		os.Exit(2)
+// 	}
+// }
 
-func (c *uploadConf) Validate() {
-	if err := valid.Struct(c); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(2)
-	}
-}
+// func (c *sendConf) Validate() {
+// 	if err := valid.Struct(c); err != nil {
+// 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+// 		os.Exit(2)
+// 	}
+// }
+
+// func (c *uploadConf) Validate() {
+// 	if err := valid.Struct(c); err != nil {
+// 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+// 		os.Exit(2)
+// 	}
+// }
 
 func newConf(app *cli.App) *conf {
 	var cfg conf
@@ -105,9 +112,9 @@ func newConf(app *cli.App) *conf {
 				},
 			},
 			Action: func(ctx *cli.Context) {
-				cfg.Common.Validate()
-
-				cfg.Send.Validate()
+				// cfg.Common.Validate()
+				// cfg.Send.Validate()
+				cfg.validate()
 
 				fmt.Println("send", cfg)
 			},
@@ -136,8 +143,9 @@ func newConf(app *cli.App) *conf {
 				},
 			},
 			Action: func(ctx *cli.Context) {
-				cfg.Common.Validate()
-				cfg.Upload.Validate()
+				// cfg.Common.Validate()
+				// cfg.Upload.Validate()
+				cfg.validate()
 
 				fmt.Println("upload", cfg)
 			},

@@ -18,9 +18,9 @@ type Template struct {
 }
 
 type Maild struct {
-	sender  mail.Sender
-	channel *amqp.Channel
-	queue   string
+	sender    mail.Sender
+	channel   *amqp.Channel
+	queueName string
 }
 
 func NewServer(conn *amqp.Connection, sender mail.Sender) (*Maild, error) {
@@ -65,9 +65,9 @@ func NewServer(conn *amqp.Connection, sender mail.Sender) (*Maild, error) {
 	}()
 
 	server := Maild{
-		sender:  sender,
-		channel: channel,
-		queue:   queue.Name,
+		sender:    sender,
+		channel:   channel,
+		queueName: queue.Name,
 	}
 
 	return &server, nil
@@ -82,17 +82,11 @@ func (self *Maild) Send(req *mail.Request, out *struct{}) error {
 	}
 
 	publishing := amqp.Publishing{
-		CorrelationId: self.queue,
+		CorrelationId: self.queueName,
 		Body:          body,
 	}
 
 	return self.channel.Publish("", "", true, true, publishing)
-}
-
-func (self *Maild) Close() error {
-	return self.channel.Publish("", "", true, true, amqp.Publishing{
-		CorrelationId: self.queue,
-	})
 }
 
 func (self *Maild) Upload(req *Template, out *struct{}) error {
@@ -128,7 +122,6 @@ func run(cfg *conf) error {
 	if err != nil {
 		return err
 	}
-	defer maild.Close()
 
 	rpc.Register(maild)
 	rpc.ServeCodec(serverCodec)

@@ -10,9 +10,8 @@ type conf struct {
 	Provider         string `validate:"required" default:"sendgrid"`
 	ProviderEndpoint string `validate:"required"`
 	AMQPUrl          string `default:"amqp://localhost:5672"`
+	AMQPRoutingKey   string `validate:"required" default:"maild"`
 	LogLevel         string `validate:"required" default:"INFO"`
-	TemplatesDir     string `validate:"required" default:"./templates"`
-	Routing          string `validate:"required" default: "maild"`
 }
 
 func newConf(app *cli.App) *conf {
@@ -43,22 +42,16 @@ func newConf(app *cli.App) *conf {
 			Destination: &cfg.AMQPUrl,
 		},
 		cli.StringFlag{
-			Name:        "routing",
-			Value:       cfg.Routing,
+			Name:        "amqp-routing",
+			Value:       cfg.AMQPRoutingKey,
 			Usage:       "AMQP routing key",
-			Destination: &cfg.Routing,
+			Destination: &cfg.AMQPRoutingKey,
 		},
 		cli.StringFlag{
 			Name:        "log-level",
 			Value:       cfg.LogLevel,
 			Usage:       "Log level, allowed values: [INFO, WARNING, ERROR, DEBUG]",
 			Destination: &cfg.LogLevel,
-		},
-		cli.StringFlag{
-			Name:        "templates-dir",
-			Value:       cfg.TemplatesDir,
-			Usage:       "Templates directory path",
-			Destination: &cfg.TemplatesDir,
 		},
 	}
 
