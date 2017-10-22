@@ -4,7 +4,7 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-type Config struct {
+type Conf struct {
 	BrokerURL    string `validated:"required" default:amqp://localhost:5672`
 	ServiceName  string `validated:"required" default:"maild"`
 	ProviderURL  string `validated:"required"`
@@ -14,6 +14,11 @@ type Config struct {
 	LogLevel     string `validated:"required" default:"INFO"`
 }
 
-func (c *Config) Validate() error {
+func (c *Conf) Validate() error {
 	return validator.New().Struct(c)
+}
+
+func NewConf() *Conf {
+	cfg := Conf{}
+
 }
