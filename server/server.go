@@ -2,8 +2,6 @@ package server
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"text/template"
 
 	"gopkg.in/go-playground/validator.v9"
@@ -47,7 +45,7 @@ func (m *Maild) Send(r *model.Request) error {
 
 	msg := model.Message{}
 
-	if err := yaml.Unmarshal(&buff, &msg); err != nil {
+	if err := yaml.Unmarshal(buff.Bytes(), &msg); err != nil {
 		return err
 	}
 

@@ -11,14 +11,17 @@ PKGRESTRE		=	$(GO) get -d ./...
 DBNAME			=	$(PROJECTNAME)
 EXENAME			=	$(PROJECTNAME)
 CONTAINERDB		=	$(DOCKER) ps --format "{{.Names}}" -f name=$(PROJECTNAME)_db
+DBUSER			=	postgres
 PGEXEC			=	$(DOCKER) exec $$($(CONTAINERDB))
-PSQL			=	$(PGEXEC) psql -U postgres
+PSQL			=	$(PGEXEC) psql -U $(DBUSER)
 PGREADY			=	$(PGEXEC) pg_isready
-CREATEDB		=	$(PGEXEC) createdb -U postgres
-DROPDB			=	$(PGEXEC) dropdb -U postgres
+CREATEDB		=	$(PGEXEC) createdb -U $(DBUSER)
+DROPDB			=	$(PGEXEC) dropdb -U $(DBUSER)
 FINDDB			=	$(PSQL) -lt | awk '{print $$1}' | grep
 PORTREADY		=	nc -z 127.0.0.1
-SQLMIGRATE		=	sql-migrate
+# go get -u -d github.com/mattes/migrate/cli github.com/lib/pq
+# go build -o bin/migrate -tags 'postgres' github.com/mattes/migrate/cli
+SQLMIGRATE		=	bin/dbmigrate
 
 SRC				=	$(wildcard model/*.go) $(wildcard server/*.go)
 BIN				= 	bin
@@ -46,9 +49,13 @@ up:
 down:
 	$(COMPOSE) down
 
-createdb:
+migratetool: $(BIN)
+	$(GO) get -d github.com/mattes/migrate/cli github.com/lib/pq
+	$(GO) build -o $(SQLMIGRATE) -tags 'postgres' github.com/mattes/migrate/cli
+
+createdb: migratetool
 	$(FINDDB) $(DBNAME) || $(CREATEDB) $(DBNAME)
-	$(SQLMIGRATE) up
+	$(SQLMIGRATE) -source file://db/migrations -database postgres://$(DBUSER)@localhost/$(DBNAME)?sslmode=disable up
 
 dropdb:
 	$(FINDDB) $(DBNAME) && $(DROPDB) $(DBNAME)

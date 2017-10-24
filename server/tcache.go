@@ -14,20 +14,20 @@ type templateID struct {
 	Name string
 }
 
-func dbLoader(db *gorm.DB) {
+func dbLoader(db *gorm.DB) func(interface{}) (interface{}, error) {
 	return func(key interface{}) (interface{}, error) {
 		tid := key.(templateID)
 
-		tmt := model.Template{}
+		tml := model.Template{}
 		err := db.
 			Where("lang = ? and name = ?", tid.Lang, tid.Name).
-			First(&tmp).Error
+			First(&tml).Error
 
 		if err != nil {
 			return nil, err
 		}
 
-		item, err := template.New(tid.Lang + tid.Name).Parse(tmt.Text)
+		item, err := template.New(tid.Lang + tid.Name).Parse(tml.Text)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +46,7 @@ func (tc *templateCache) Get(lang, name string) (*template.Template, error) {
 		return nil, err
 	}
 
-	return data.(*template.Template)
+	return data.(*template.Template), nil
 }
 
 func NewDbCache(maxSize int, db *gorm.DB) TemplateCache {
