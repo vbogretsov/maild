@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 
 	"gopkg.in/go-playground/validator.v9"
@@ -52,8 +51,6 @@ func (m *Maild) Send(r *model.Request) error {
 
 	msg.To = append(msg.To, r.To...)
 	msg.Cc = append(msg.Cc, r.Cc...)
-
-	fmt.Println("send", msg)
 
 	return m.provider.SendMail(&msg)
 }
