@@ -1,4 +1,4 @@
-CREATE TABLE tempaltes(
+CREATE TABLE templates (
     lang     VARCHAR(4) NOT NULL,
     name     VARCHAR(32) NOT NULL,
     value    TEXT NOT NULL,

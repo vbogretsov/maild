@@ -112,12 +112,12 @@ func run(cfg *conf) error {
 	}
 
 	q, err := ch.QueueDeclare(
-		"",    // name
-		true,  // durable
-		false, // delete when usused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+		cfg.ServiceName, // name
+		true,            // durable
+		false,           // delete when usused
+		false,           // exclusive
+		false,           // no-wait
+		nil,             // arguments
 	)
 	if err != nil {
 		return err

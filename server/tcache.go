@@ -27,7 +27,7 @@ func dbLoader(db *gorm.DB) func(interface{}) (interface{}, error) {
 			return nil, err
 		}
 
-		item, err := template.New(tid.Lang + tid.Name).Parse(tml.Text)
+		item, err := template.New(tid.Lang + tid.Name).Parse(tml.Value)
 		if err != nil {
 			return nil, err
 		}

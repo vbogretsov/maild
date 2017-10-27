@@ -7,6 +7,7 @@ DOCKERHOST		=	0.0.0.0:65535
 DOCKER			=	docker -H $(DOCKERHOST)
 COMPOSE			=	docker-compose -H $(DOCKERHOST)
 GO				?=	go
+GFLAGS			=	"-N -l"
 PKGRESTRE		=	$(GO) get -d ./...
 DBNAME			=	$(PROJECTNAME)
 EXENAME			=	$(PROJECTNAME)
@@ -65,7 +66,7 @@ $(BIN):
 
 build: $(SRC) $(BIN)
 	$(PKGRESTRE)
-	$(GO) build -o $(BIN)/$(PROJECTNAME) ./cmd/$(PROJECTNAME)
+	$(GO) build -o $(BIN)/$(PROJECTNAME) -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
 
 clean:
 	rm -rf $(BIN)

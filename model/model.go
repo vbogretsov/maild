@@ -1,19 +1,21 @@
 package model
 
 type Template struct {
-	Lang string
-	Name string
-	Text string
+	Lang  string
+	Name  string
+	Value string
 }
 
 type Request struct {
-	TemplateLang string `validate:"required"`
-	TemplateName string `validate:"required"`
-	TemplateArgs string `validate:"required"`
+	TemplateLang string      `validate:"required"`
+	TemplateName string      `validate:"required"`
+	TemplateArgs interface{} `validate:"required"`
+	To           []Address   `validate:"required"`
+	Cc           []Address
 }
 
 type Address struct {
-	Email string `yaml:"Email" json:"email,omitempty"`
+	Email string `yaml:"Email" json:"email,omitempty" validate:"required"`
 	Name  string `yaml:"Name" json:"name,omitempty"`
 }
 
