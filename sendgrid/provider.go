@@ -1,11 +1,16 @@
-package server
+package sendgrid
 
 import (
 	"encoding/json"
 
-	"github.com/sendgrid/sendgrid-go"
+	api "github.com/sendgrid/sendgrid-go"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/vbogretsov/maild/model"
+)
+
+var (
+	valid = validator.New()
 )
 
 type content struct {
@@ -25,12 +30,12 @@ type sendGridData struct {
 	Content          content          `json:"content"`
 }
 
-type sendGridProvider struct {
+type Provider struct {
 	url string
 	key string
 }
 
-func (sp *sendGridProvider) SendMail(message *model.Message) error {
+func (p *Provider) SendMail(message *model.Message) error {
 	if err := valid.Struct(message); err != nil {
 		return err
 	}
@@ -53,17 +58,14 @@ func (sp *sendGridProvider) SendMail(message *model.Message) error {
 		return err
 	}
 
-	request := sendgrid.GetRequest(sp.key, "/v3/mail/send", sp.url)
+	request := api.GetRequest(p.key, "/v3/mail/send", p.url)
 	request.Method = "POST"
 	request.Body = data
 
-	_, err = sendgrid.API(request)
+	_, err = api.API(request)
 	return err
 }
 
-func NewSendGridProvider(url, key string) Provider {
-	return &sendGridProvider{
-		url: url,
-		key: key,
-	}
+func NewProvider(url, key string) *Provider {
+	return &Provider{url: url, key: key}
 }

@@ -1,9 +1,12 @@
 package model
 
-type Template struct {
-	Lang  string
-	Name  string
-	Value string
+import (
+	"text/template"
+)
+
+type Address struct {
+	Email string `yaml:"Email" json:"email,omitempty" validate:"required"`
+	Name  string `yaml:"Name" json:"name,omitempty"`
 }
 
 type Request struct {
@@ -14,11 +17,6 @@ type Request struct {
 	Cc           []Address
 }
 
-type Address struct {
-	Email string `yaml:"Email" json:"email,omitempty" validate:"required"`
-	Name  string `yaml:"Name" json:"name,omitempty"`
-}
-
 type Message struct {
 	From     Address   `yaml:"From"`
 	To       []Address `yaml:"To"`
@@ -26,4 +24,15 @@ type Message struct {
 	Subject  string    `yaml:"Subject"`
 	BodyType string    `yaml:"BodyType"`
 	Body     string    `yaml:"Body"`
+}
+
+type TemplateLoader func(*TemplateID) (*template.Template, error)
+
+type TemplateID struct {
+	Lang string
+	Name string
+}
+
+type Provider interface {
+	SendMail(*Message) error
 }
