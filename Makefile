@@ -70,7 +70,7 @@ build: $(SRC) $(BIN)
 
 test:
 	$(PKGRESTRE)
-	$(GO) test -v ./sendgrid ./server
+	$(GO) test -v ./...
 
 clean:
 	rm -rf $(BIN)

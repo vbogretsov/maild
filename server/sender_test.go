@@ -23,6 +23,15 @@ Body: |
   Hello {{.Username}}!
   This is test body!
 `
+	eninval = `
+From:
+x
+Subject: Subject
+BodyType: "text/plain"
+Body: |
+  Hello {{.Username}}!
+  This is test body!
+`
 )
 
 type testProvider struct {
@@ -49,6 +58,9 @@ func testSender(sender *server.Maild, provider *testProvider, st senderTest) fun
 		if err == nil && st.Error != nil {
 			t.Errorf("expected error got nil")
 		}
+		if err != nil && st.Error != nil {
+			return
+		}
 		if !reflect.DeepEqual(st.Message, provider.Recv) {
 			t.Errorf(
 				"error: message received do not match expected message: %v",
@@ -60,7 +72,8 @@ func testSender(sender *server.Maild, provider *testProvider, st senderTest) fun
 
 func TestSender(t *testing.T) {
 	templateDB := map[model.TemplateID]string{
-		{Lang: "en", Name: "test"}: entest,
+		{Lang: "en", Name: "test"}:  entest,
+		{Lang: "en", Name: "inval"}: eninval,
 	}
 
 	templateLoader := func(key model.TemplateID) (*template.Template, error) {
@@ -109,6 +122,122 @@ func TestSender(t *testing.T) {
 				Body:     "Hello Donald!\nThis is test body!\n",
 			},
 			Error: nil,
+		},
+		{
+			Request: model.Request{
+				TemplateLang: "en",
+				TemplateName: "test",
+				TemplateArgs: map[string]interface{}{
+					"Username": "Donald",
+				},
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+			},
+			Message: model.Message{
+				From: model.Address{
+					Name:  "LevelUP",
+					Email: "levelup@levelup.com",
+				},
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+				Subject:  "Subject",
+				BodyType: "text/plain",
+				Body:     "Hello Donald!\nThis is test body!\n",
+			},
+			Error: nil,
+		},
+		{
+			Request: model.Request{
+				TemplateLang: "en",
+				TemplateName: "test2",
+				TemplateArgs: map[string]interface{}{
+					"Username": "Donald",
+				},
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+				Cc: []model.Address{
+					{Email: "cc1@mail.com"},
+					{Email: "cc2@mail.com"},
+				},
+			},
+			Message: model.Message{},
+			Error:   errors.New("template not found"),
+		},
+		{
+			Request: model.Request{
+				TemplateLang: "en",
+				TemplateName: "test",
+				TemplateArgs: map[string]interface{}{
+					"Username": "Donald",
+				},
+				Cc: []model.Address{
+					{Email: "cc1@mail.com"},
+					{Email: "cc2@mail.com"},
+				},
+			},
+			Message: model.Message{},
+			Error:   errors.New("invalid request"),
+		},
+		{
+			Request: model.Request{
+				TemplateLang: "en",
+				TemplateName: "test",
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+			},
+			Message: model.Message{},
+			Error:   errors.New("invalid request"),
+		},
+		{
+			Request: model.Request{
+				TemplateLang: "en",
+				TemplateArgs: map[string]interface{}{
+					"Username": "Donald",
+				},
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+			},
+			Message: model.Message{},
+			Error:   errors.New("template not found"),
+		},
+		{
+			Request: model.Request{
+				TemplateName: "test2",
+				TemplateArgs: map[string]interface{}{
+					"Username": "Donald",
+				},
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+			},
+			Message: model.Message{},
+			Error:   errors.New("template not found"),
+		},
+		{
+			Request: model.Request{
+				TemplateLang: "en",
+				TemplateName: "inval",
+				TemplateArgs: map[string]interface{}{
+					"Username": "Donald",
+				},
+				To: []model.Address{
+					{Email: "to1@mail.com"},
+					{Email: "to2@mail.com"},
+				},
+			},
+			Message: model.Message{},
+			Error:   errors.New("unable to build message"),
 		},
 	}
 
