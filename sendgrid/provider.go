@@ -2,6 +2,8 @@ package sendgrid
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
+	"net/http"
 
 	api "github.com/sendgrid/sendgrid-go"
 	"gopkg.in/go-playground/validator.v9"
@@ -13,21 +15,21 @@ var (
 	valid = validator.New()
 )
 
-type content struct {
+type sgContent struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
 }
 
-type personalizations struct {
+type sgPersonalization struct {
 	Subject string          `json:"subject"`
 	To      []model.Address `json:"to"`
 	Cc      []model.Address `json:"cc,omitempty"`
 }
 
-type sendGridData struct {
-	From             model.Address    `json:"from"`
-	Personalizations personalizations `json:"personalization"`
-	Content          content          `json:"content"`
+type sgMessage struct {
+	From            model.Address     `json:"from"`
+	Personalization sgPersonalization `json:"personalization"`
+	Content         sgContent         `json:"content"`
 }
 
 type Provider struct {
@@ -40,14 +42,14 @@ func (p *Provider) SendMail(message *model.Message) error {
 		return err
 	}
 
-	sgdata := sendGridData{
+	sgdata := sgMessage{
 		From: message.From,
-		Personalizations: personalizations{
+		Personalization: sgPersonalization{
 			Subject: message.Subject,
 			To:      message.To,
 			Cc:      message.Cc,
 		},
-		Content: content{
+		Content: sgContent{
 			Type:  message.BodyType,
 			Value: message.Body,
 		},
@@ -62,8 +64,16 @@ func (p *Provider) SendMail(message *model.Message) error {
 	request.Method = "POST"
 	request.Body = data
 
-	_, err = api.API(request)
-	return err
+	resp, err := api.API(request)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("SendGrid API call failed: %d", resp.StatusCode)
+	}
+
+	return nil
 }
 
 func NewProvider(url, key string) *Provider {

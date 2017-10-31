@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 
 	"github.com/bluele/gcache"
@@ -33,20 +34,20 @@ func (m *Maild) Send(r *model.Request, out *struct{}) error {
 
 	val, err := m.cache.Get(tid)
 	if err != nil {
-		return errors.Wrap(err, "template {%s, %s} not found")
+		return errors.Wrap(err, "template not found")
 	}
 
 	tml, _ := val.(*template.Template)
 
 	buf := bytes.Buffer{}
 	if err := tml.Execute(&buf, r.TemplateArgs); err != nil {
-		return err
+		return errors.Wrap(err, "template execution failed")
 	}
 
 	msg := model.Message{}
 
 	if err := yaml.Unmarshal(buf.Bytes(), &msg); err != nil {
-		return err
+		return errors.Wrap(err, "unable to build mail message")
 	}
 
 	msg.To = append(msg.To, r.To...)
