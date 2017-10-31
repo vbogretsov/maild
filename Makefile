@@ -68,5 +68,9 @@ build: $(SRC) $(BIN)
 	$(PKGRESTRE)
 	$(GO) build -o $(BIN)/$(PROJECTNAME) -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
 
+test:
+	$(PKGRESTRE)
+	$(GO) test -v ./sendgrid ./server
+
 clean:
 	rm -rf $(BIN)

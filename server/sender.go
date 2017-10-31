@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 
 	"github.com/bluele/gcache"
