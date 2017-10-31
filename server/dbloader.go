@@ -19,7 +19,7 @@ func (templateData) TableName() string {
 }
 
 func NewDbLoader(db *gorm.DB) model.TemplateLoader {
-	return func(key *model.TemplateID) (*template.Template, error) {
+	return func(key model.TemplateID) (*template.Template, error) {
 		tml := templateData{}
 		err := db.
 			Where("lang = ? and name = ?", key.Lang, key.Name).

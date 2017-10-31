@@ -16,7 +16,6 @@ var (
 	valid = validator.New()
 )
 
-// TODO(vbogretsov): rename sender to Maild
 type Maild struct {
 	cache    gcache.Cache
 	provider model.Provider
@@ -32,7 +31,7 @@ func (m *Maild) Send(r *model.Request, out *struct{}) error {
 		Name: r.TemplateName,
 	}
 
-	val, err := m.cache.Get(&tid)
+	val, err := m.cache.Get(tid)
 	if err != nil {
 		return errors.Wrap(err, "template {%s, %s} not found")
 	}
@@ -60,7 +59,7 @@ func NewMaild(provider model.Provider, loader model.TemplateLoader, cacheSize in
 	cache := gcache.New(cacheSize).
 		LRU().
 		LoaderFunc(func(key interface{}) (interface{}, error) {
-			return loader(key.(*model.TemplateID))
+			return loader(key.(model.TemplateID))
 		}).
 		Build()
 	return &Maild{cache: cache, provider: provider}

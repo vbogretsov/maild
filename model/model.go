@@ -26,12 +26,12 @@ type Message struct {
 	Body     string    `yaml:"Body"`
 }
 
-type TemplateLoader func(*TemplateID) (*template.Template, error)
-
 type TemplateID struct {
 	Lang string
 	Name string
 }
+
+type TemplateLoader func(TemplateID) (*template.Template, error)
 
 type Provider interface {
 	SendMail(*Message) error
