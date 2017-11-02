@@ -34,24 +34,15 @@ Body: |
 `
 )
 
-type testProvider struct {
-	Recv model.Message
-}
-
-func (tp *testProvider) SendMail(m *model.Message) error {
-	tp.Recv = *m
-	return nil
-}
-
 type senderTest struct {
 	Request model.Request
 	Message model.Message
 	Error   error
 }
 
-func testSender(sender *server.Maild, provider *testProvider, st senderTest) func(*testing.T) {
+func testSender(sender *server.Maild, m *model.Message, st senderTest) func(*testing.T) {
 	return func(t *testing.T) {
-		err := sender.Send(&st.Request, &struct{}{})
+		err := sender.Send(st.Request, &struct{}{})
 		if err != nil && st.Error == nil {
 			t.Errorf("unexpected error %v", err)
 		}
@@ -61,31 +52,34 @@ func testSender(sender *server.Maild, provider *testProvider, st senderTest) fun
 		if err != nil && st.Error != nil {
 			return
 		}
-		if !reflect.DeepEqual(st.Message, provider.Recv) {
+		if !reflect.DeepEqual(st.Message, *m) {
 			t.Errorf(
 				"error: message received do not match expected message: %v",
-				pretty.Diff(st.Message, provider.Recv),
+				pretty.Diff(st.Message, *m),
 			)
 		}
 	}
 }
 
 func TestSender(t *testing.T) {
-	templateDB := map[model.TemplateID]string{
-		{Lang: "en", Name: "test"}:  entest,
-		{Lang: "en", Name: "inval"}: eninval,
+	var expectedMsg model.Message
+
+	templates := template.New("maild")
+
+	templates.AddParseTree(
+		"en-test.msg",
+		template.Must(template.New("en-test.msg").Parse(entest)).Copy())
+
+	templates.AddParseTree(
+		"en-inval.msg",
+		template.Must(template.New("en-inval.msg").Parse(eninval)).Copy())
+
+	sendmail := func(m model.Message) error {
+		expectedMsg = m
+		return nil
 	}
 
-	templateLoader := func(key model.TemplateID) (*template.Template, error) {
-		if value, ok := templateDB[key]; ok {
-			return template.New(key.Lang + key.Name).Parse(value)
-		}
-
-		return nil, errors.New("record not found")
-	}
-
-	provider := testProvider{}
-	sender := server.NewMaild(&provider, templateLoader, 10)
+	sender := server.NewMaild(sendmail, templates)
 
 	tests := []senderTest{
 		{
@@ -242,6 +236,6 @@ func TestSender(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run("TestSender", testSender(sender, &provider, test))
+		t.Run("TestSender", testSender(sender, &expectedMsg, test))
 	}
 }

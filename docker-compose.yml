@@ -1,14 +1,6 @@
 version: "3"
 services:
-  sendgrid:
-    image: "tfsoares/sendgrid-mock"
-    ports:
-      - "64000:3000"
   rabbitmq:
     image: "rabbitmq:3.6-alpine"
     ports:
       - "5672:5672"
-  db:
-    image: "postgres:9.6-alpine"
-    ports:
-      - "5432:5432"

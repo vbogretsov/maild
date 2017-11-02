@@ -32,12 +32,14 @@ type sgMessage struct {
 	Content         sgContent         `json:"content"`
 }
 
+// Provider represents a SendGrid client.
 type Provider struct {
 	url string
 	key string
 }
 
-func (p *Provider) SendMail(message *model.Message) error {
+// SendMail sends the message provided via SendGrid service.
+func (p *Provider) SendMail(message model.Message) error {
 	if err := valid.Struct(message); err != nil {
 		return err
 	}
@@ -76,6 +78,7 @@ func (p *Provider) SendMail(message *model.Message) error {
 	return nil
 }
 
+// NewProvider creates new SendGrid provider.
 func NewProvider(url, key string) *Provider {
 	return &Provider{url: url, key: key}
 }

@@ -49,7 +49,7 @@ func toSendGridMessage(m model.Message) sgMessage {
 
 func testSendSucceed(p *sendgrid.Provider, m model.Message, r *[]byte) func(*testing.T) {
 	return func(t *testing.T) {
-		err := p.SendMail(&m)
+		err := p.SendMail(m)
 		if err != nil {
 			t.Error(err)
 		}

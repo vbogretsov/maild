@@ -7,7 +7,9 @@ DOCKERHOST		=	0.0.0.0:65535
 DOCKER			=	docker -H $(DOCKERHOST)
 COMPOSE			=	docker-compose -H $(DOCKERHOST)
 GO				?=	go
-GFLAGS			=	"-N -l"
+GFLAGS			?=	""
+GOOS 			?=	darwin
+GOARCH			?=	amd64
 PKGRESTRE		=	$(GO) get -d ./...
 DBNAME			=	$(PROJECTNAME)
 EXENAME			=	$(PROJECTNAME)
@@ -25,7 +27,8 @@ PORTREADY		=	nc -z 127.0.0.1
 SQLMIGRATE		=	bin/dbmigrate
 
 SRC				=	$(wildcard model/*.go) $(wildcard server/*.go)
-BIN				= 	bin
+BIN				=	bin
+IMG				=	img
 
 define wait
 	@while $1 ; do sleep 1; done
@@ -64,6 +67,9 @@ dropdb:
 $(BIN):
 	mkdir -p $(BIN)
 
+$(IMG):
+	mkdir -p $(IMG)
+
 build: $(SRC) $(BIN)
 	$(PKGRESTRE)
 	$(GO) build -o $(BIN)/$(PROJECTNAME) -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
@@ -74,3 +80,9 @@ test:
 
 clean:
 	rm -rf $(BIN)
+	rm -rf $(IMG)
+
+image: $(IMG)
+	# $(PKGRESTRE)
+	# env GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(IMG)/$(PROJECTNAME) -v -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
+	$(DOCKER) build -t vbogretsov/maild:1 .
