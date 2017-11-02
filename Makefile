@@ -11,6 +11,7 @@ GFLAGS			?=	""
 GOOS 			?=	darwin
 GOARCH			?=	amd64
 PKGRESTORE		=	$(GO) get -d ./...
+PGKRESTOREALL	=	$(GO) list -f '{{range .TestImports}}{{.}} {{end}}'
 # DBNAME			=	$(PROJECTNAME)
 EXENAME			=	$(PROJECTNAME)
 # CONTAINERDB		=	$(DOCKER) ps --format "{{.Names}}" -f name=$(PROJECTNAME)_db
@@ -73,7 +74,8 @@ $(EXE): $(SRC) $(BIN)
 	env GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -o $(EXE) -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
 
 test:
-	$(PKGRESTORE)
+	$(PGKRESTOREALL) ./sendgrid | xargs $(GO) get
+	$(PGKRESTOREALL) ./server | xargs $(GO) get
 	$(GO) test -v ./...
 
 clean:

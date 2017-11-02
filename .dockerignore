@@ -1,0 +1,11 @@
+.git/
+.env/
+cmd/
+model/
+pubsub/
+sendgrid/
+server/
+LICENSE
+.gitignore
+README.md
+Makefile
