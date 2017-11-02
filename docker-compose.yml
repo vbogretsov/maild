@@ -4,3 +4,9 @@ services:
     image: "rabbitmq:3.6-alpine"
     ports:
       - "5672:5672"
+  maild:
+    image: "vbogretsov/maild:1"
+    depends_on:
+      - rabbitmq
+    volumes:
+      - /vagrant/templates:/var/lib/maild/templates

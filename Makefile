@@ -10,79 +10,75 @@ GO				?=	go
 GFLAGS			?=	""
 GOOS 			?=	darwin
 GOARCH			?=	amd64
-PKGRESTRE		=	$(GO) get -d ./...
-DBNAME			=	$(PROJECTNAME)
+PKGRESTORE		=	$(GO) get -d ./...
+# DBNAME			=	$(PROJECTNAME)
 EXENAME			=	$(PROJECTNAME)
-CONTAINERDB		=	$(DOCKER) ps --format "{{.Names}}" -f name=$(PROJECTNAME)_db
-DBUSER			=	postgres
-PGEXEC			=	$(DOCKER) exec $$($(CONTAINERDB))
-PSQL			=	$(PGEXEC) psql -U $(DBUSER)
-PGREADY			=	$(PGEXEC) pg_isready
-CREATEDB		=	$(PGEXEC) createdb -U $(DBUSER)
-DROPDB			=	$(PGEXEC) dropdb -U $(DBUSER)
-FINDDB			=	$(PSQL) -lt | awk '{print $$1}' | grep
-PORTREADY		=	nc -z 127.0.0.1
+# CONTAINERDB		=	$(DOCKER) ps --format "{{.Names}}" -f name=$(PROJECTNAME)_db
+# DBUSER			=	postgres
+# PGEXEC			=	$(DOCKER) exec $$($(CONTAINERDB))
+# PSQL			=	$(PGEXEC) psql -U $(DBUSER)
+# PGREADY			=	$(PGEXEC) pg_isready
+# CREATEDB		=	$(PGEXEC) createdb -U $(DBUSER)
+# DROPDB			=	$(PGEXEC) dropdb -U $(DBUSER)
+# FINDDB			=	$(PSQL) -lt | awk '{print $$1}' | grep
+# PORTREADY		=	nc -z 127.0.0.1
 # go get -u -d github.com/mattes/migrate/cli github.com/lib/pq
 # go build -o bin/migrate -tags 'postgres' github.com/mattes/migrate/cli
-SQLMIGRATE		=	bin/dbmigrate
+# SQLMIGRATE		=	bin/dbmigrate
 
-SRC				=	$(wildcard model/*.go) $(wildcard server/*.go)
+SRC				=	$(wildcard model/*.go) $(wildcard server/*.go) $(wildcard pubsub/*.go)
 BIN				=	bin
-IMG				=	img
+EXE				=	$(BIN)/maild
 
-define wait
-	@while $1 ; do sleep 1; done
-endef
+# define wait
+# 	@while $1 ; do sleep 1; done
+# endef
 
-define wait_port
-	$(call wait,! $(PORTREADY) $1)
-endef
+# define wait_port
+# 	$(call wait,! $(PORTREADY) $1)
+# endef
 
-define wait_pg
-	$(call wait,! $(PGREADY))
-	@sleep 1
-	$(call wait,! $(PGREADY))
-endef
+# define wait_pg
+# 	$(call wait,! $(PGREADY))
+# 	@sleep 1
+# 	$(call wait,! $(PGREADY))
+# endef
 
-default: build
+default: $(EXE)
+
 
 up:
 	$(COMPOSE) up -d
-	$(call wait_pg)
+	# $(call wait_pg)
 
 down:
 	$(COMPOSE) down
 
-migratetool: $(BIN)
-	$(GO) get -d github.com/mattes/migrate/cli github.com/lib/pq
-	$(GO) build -o $(SQLMIGRATE) -tags 'postgres' github.com/mattes/migrate/cli
+# migratetool: $(BIN)
+# 	$(GO) get -d github.com/mattes/migrate/cli github.com/lib/pq
+# 	$(GO) build -o $(SQLMIGRATE) -tags 'postgres' github.com/mattes/migrate/cli
 
-createdb: migratetool
-	$(FINDDB) $(DBNAME) || $(CREATEDB) $(DBNAME)
-	$(SQLMIGRATE) -source file://db/migrations -database postgres://$(DBUSER)@localhost/$(DBNAME)?sslmode=disable up
+# createdb: migratetool
+# 	$(FINDDB) $(DBNAME) || $(CREATEDB) $(DBNAME)
+# 	$(SQLMIGRATE) -source file://db/migrations -database postgres://$(DBUSER)@localhost/$(DBNAME)?sslmode=disable up
 
-dropdb:
-	$(FINDDB) $(DBNAME) && $(DROPDB) $(DBNAME)
+# dropdb:
+# 	$(FINDDB) $(DBNAME) && $(DROPDB) $(DBNAME)
 
 $(BIN):
 	mkdir -p $(BIN)
 
-$(IMG):
-	mkdir -p $(IMG)
-
-build: $(SRC) $(BIN)
-	$(PKGRESTRE)
-	$(GO) build -o $(BIN)/$(PROJECTNAME) -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
+$(EXE): $(SRC) $(BIN)
+	$(PKGRESTORE)
+	env GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -o $(EXE) -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
 
 test:
-	$(PKGRESTRE)
+	$(PKGRESTORE)
 	$(GO) test -v ./...
 
 clean:
+	$(GO) clean
 	rm -rf $(BIN)
-	rm -rf $(IMG)
 
-image: $(IMG)
-	# $(PKGRESTRE)
-	# env GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $(IMG)/$(PROJECTNAME) -v -gcflags $(GFLAGS) ./cmd/$(PROJECTNAME)
+image: $(EXE)
 	$(DOCKER) build -t vbogretsov/maild:1 .

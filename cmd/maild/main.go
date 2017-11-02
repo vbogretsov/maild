@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/rpc"
 	"os"
+	"os/signal"
+	"syscall"
 	"text/template"
 
 	"github.com/op/go-logging"
@@ -23,7 +25,7 @@ const (
 	name    = "maild"
 	usage   = "notification service for micro service architecture"
 	version = "0.0.0"
-	logfmt  = `%{color}#%{id:03x} [%{pid}] %{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{message}%{color:reset}`
+	logfmt  = `%{color}#%{id:03x} [%{pid}] %{time:15:04:05.000} %{module}	▶ %{level:.4s} %{message}%{color:reset}`
 
 	brokerURLUsage    = `URL of the broker which holds the queue of requests`
 	serviceNameUsage  = `name of the service is used for routing requests`
@@ -153,8 +155,16 @@ func newConsumer(cfg *conf) *consumer {
 	}}
 }
 
+func waitForExit() {
+	log.Info("started")
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
+	<-sigs
+	log.Info("terminated")
+}
+
 func run(cfg *conf) error {
-	log.Info("connecting broker ....")
+	log.Infof("connecting broker %s ....", cfg.BrokerURL)
 	amqpconn, err := amqp.Dial(cfg.BrokerURL)
 	if err != nil {
 		return err
@@ -201,9 +211,10 @@ func run(cfg *conf) error {
 		log.Fatal(err)
 	}
 
-	log.Info("maild stared")
+	go rpc.ServeCodec(serverCodec)
 
-	rpc.ServeCodec(serverCodec)
+	waitForExit()
+
 	return nil
 }
 
