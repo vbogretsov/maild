@@ -1,11 +1,11 @@
 FROM alpine:3.6
 
-ENV	BROKER_URL=amqp://guest:guest@rabbitmq:5672/ \
-	PROVIDER_URL=none \
-	PROVIDER_KEY=none \
-	PROVIDER_NAME=log \
-	SERVICE_NAME=maild \
-	LOG_LEVEL=INFO
+ENV	MAILD_BROKER_URL=amqp://guest:guest@rabbitmq:5672/ \
+	MAILD_PROVIDER_URL=none \
+	MAILD_PROVIDER_KEY=none \
+	MAILD_PROVIDER_NAME=log \
+	MAILD_SERVICE_NAME=maild \
+	MAILD_LOG_LEVEL=INFO
 
 ADD ./bin/maild /bin/maild
 ADD ./docker-entrypoint.sh /bin/docker-entrypoint.sh
