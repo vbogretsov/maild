@@ -28,7 +28,7 @@ Command line options:
 $ docker pull vbogretsov/maild:1
 ```
 
-To add custom templates either use volume mounted into `/var/lib/maild/tempaltes` or create a new image based on `vbogretsov/maild`. Example Dockerfile:
+To add custom templates either use volume mounted into `/var/lib/maild/templates` or create a new image based on `vbogretsov/maild`. Example Dockerfile:
 
 ```{Dockerfile}
 FROM vbogretsov/maild:1
