@@ -1,4 +1,5 @@
 # maild
+#### 1.0.0
 Simple notification service for micro service architecture
 
 ## Installation
@@ -27,7 +28,7 @@ Command line options:
 $ docker pull vbogretsov/maild:1
 ```
 
-Create a Dockerfile
+To add custom templates either use volume mounted into `/var/lib/maild/tempaltes` or create a new image based on `vbogretsov/maild`. Example Dockerfile:
 
 ```{Dockerfile}
 FROM vbogretsov/maild:1
