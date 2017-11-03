@@ -11,9 +11,9 @@ PGKRESTORE		=	$(GO) list -f '{{range .TestImports}}{{.}} {{end}}'
 EXENAME			=	$(PROJECTNAME)
 
 SRC				=	$(wildcard model/*.go) \
-					$(wildcard server/*.go) \
 					$(wildcard pubsub/*.go) \
-					$(wildcard sendgrid/*.go)
+					$(wildcard sendgrid/*.go) \
+					$(wildcard server/*.go)
 
 BIN				=	bin
 EXE				=	$(BIN)/maild
