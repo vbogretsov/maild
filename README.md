@@ -53,7 +53,7 @@ Email tempaltes should be a golang templates named according to the pattern: lan
 
 Available clients:
 
-* [GOLANG](https://github.com/vbogretsov/go-mailcd)
+* [Go](https://github.com/vbogretsov/go-mailcd)
 
 ## Licence
 
