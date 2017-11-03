@@ -12,13 +12,13 @@ $ go install github.com/vbogretsov/maild/cmd/maild
 
 Command line options:
 
-* --broker-url value     URL of the broker which holds the queue of requests (default: "amqp://localhost:5672")
-* --service-name value   name of the service is used for routing requests (default: "maild")
+* --broker-url value     URL of the broker which holds the queue of requests (default: amqp://localhost:5672)
+* --service-name value   name of the service is used for routing requests (default: maild)
 * --provider-url value   URL of SMTP service provider
 * --provider-key value   SMTP service provider security key
-* --provider-name value  SMTP provider name, allowed valus: [sendgrid, log] (default: "log")
+* --provider-name value  SMTP provider name, allowed valus: [sendgrid, log] (default: log)
 * --template-dir value   email templates location
-* --log-level value      log level, allowed values: [DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL] (default: "INFO")
+* --log-level value      log level, allowed values: [DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL] (default: INFO)
 * --help, -h             show help
 * --version, -v          print the version
 
