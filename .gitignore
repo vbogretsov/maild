@@ -12,6 +12,7 @@
 
 # Virtual environment
 .env/**
+.venv/**
 
 # Binary files
 bin/**

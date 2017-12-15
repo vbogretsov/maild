@@ -11,7 +11,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/streadway/amqp"
 	"github.com/urfave/cli"
-	"github.com/vbogretsov/amqprpc"
+	"github.com/vbogretsov/go-amqprpc"
 	"gopkg.in/go-playground/validator.v9"
 	"gopkg.in/mcuadros/go-defaults.v1"
 

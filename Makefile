@@ -1,8 +1,7 @@
 PROJECTNAME		=	$$(basename $$(pwd))
 
-DOCKERHOST		=	0.0.0.0:65535
-DOCKER			=	docker -H $(DOCKERHOST)
-COMPOSE			=	docker-compose -H $(DOCKERHOST)
+DOCKER			=	docker
+COMPOSE			=	docker-compose
 GO				?=	go
 GFLAGS			?=	""
 GOOS 			=	$$($(GO) env GOOS)
