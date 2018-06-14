@@ -8,25 +8,6 @@ term()
 
 trap term SIGTERM
 
-wait_rabbit()
-{
-    local BROKER_HOST=$(echo $MAILD_BROKER_URL | sed 's/\///g' | sed s/amqp://g | sed s/.*:.*@//g | cut -d':' -f 1)
-    local BROKER_PORT=$(echo $MAILD_BROKER_URL | sed 's/\///g' | sed s/amqp://g | sed s/.*:.*@//g | cut -d':' -f 2)
-
-    for i in $(seq 1 10)
-    do
-            if nc -z $BROKER_HOST $BROKER_PORT
-            then
-                    break;
-            else
-                    echo unable to connect broker $MAILD_BROKER_URL;
-                    sleep 1;
-            fi
-    done
-}
-
-wait_rabbit
-
 /bin/maild	--provider-url $MAILD_PROVIDER_URL \
 			--provider-key $MAILD_PROVIDER_KEY \
 			--provider-name $MAILD_PROVIDER_NAME \
