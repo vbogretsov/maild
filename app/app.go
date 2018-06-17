@@ -2,44 +2,51 @@ package app
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"text/template"
 
-	"github.com/vbogretsov/go-validation"
-	"gopkg.in/go-playground/validator.v9"
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v2"
 
-	"github.com/vbogretsov/maild/app/loader"
-	"github.com/vbogretsov/maild/app/sender"
 	"github.com/vbogretsov/maild/model"
 )
 
-var Validate = validator.New()
+// ArgumentError represents an error caused by user input.
+type ArgumentError error
 
-type App struct {
-	loader loader.Loader
-	sender sender.Sender
+// Loader represents interface of templates loader.
+type Loader interface {
+	// Load loads a template with the language and name provided.
+	Load(lang, name string) (io.Reader, error)
 }
 
-func New(loader loader.Loader, sender sender.Sender) *App {
+// Sender represent inteface for an email sender.
+type Sender interface {
+	Send(model.Message) error
+}
+
+// App represents a maild application.
+type App struct {
+	loader Loader
+	sender Sender
+}
+
+// New creates a new mail app.
+func New(loader Loader, sender Sender) *App {
 	return &App{
 		loader: loader,
 		sender: sender,
 	}
 }
 
-func (a *App) SendMail(req model.Request) error {
-	if err := Validate.Struct(req); err != nil {
-		return validation.Error(err)
+// SendMail build email from template and sends it.
+func (ap *App) SendMail(req model.Request) error {
+	if err := validateRequest(&req); err != nil {
+		return ArgumentError(err)
 	}
 
-	if len(req.To) == 0 && len(req.Cc) == 0 && len(req.Bcc) == 0 {
-		return validation.Error(errors.New("missing recipients"))
-	}
-
-	body, err := a.loader.Load(req.TemplateLang, req.TemplateName)
+	body, err := ap.loader.Load(req.TemplateLang, req.TemplateName)
 	if err != nil {
 		return err
 	}
@@ -82,5 +89,9 @@ func (a *App) SendMail(req model.Request) error {
 		msg.Bcc = append(msg.Bcc, rec)
 	}
 
-	return a.sender.Send(msg)
+	if err := validateMessage(&msg); err != nil {
+		return err
+	}
+
+	return ap.sender.Send(msg)
 }

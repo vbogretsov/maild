@@ -5,19 +5,23 @@ import (
 	"os"
 
 	"github.com/akamensky/argparse"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/vbogretsov/maild/api"
+	amqpapi "github.com/vbogretsov/maild/api/amqp"
 	"github.com/vbogretsov/maild/app"
 	"github.com/vbogretsov/maild/app/loader"
 	"github.com/vbogretsov/maild/app/sender"
 )
 
 type argT struct {
-	port     *int
 	provider struct {
 		Name *string
 		URL  *string
 		Key  *string
+	}
+	amqp struct {
+		URL   *string
+		QName *string
 	}
 	template struct {
 		Path *string
@@ -29,7 +33,7 @@ type argT struct {
 
 var (
 	args   = argT{}
-	parser = argparse.NewParser(name, usage)
+	parser = argparse.NewParser(fmt.Sprintf("%s %s", name, version), usage)
 )
 
 func init() {
@@ -61,13 +65,26 @@ func init() {
 			Required: true,
 			Help:     templatesPathHelp,
 		})
-	args.port = parser.Int(
+	args.amqp.URL = parser.String(
 		"",
-		"port",
+		"amqp-url",
 		&argparse.Options{
 			Required: false,
-			Help:     portHelp,
-			Default:  8000,
+			Default:  "amqp://guest:guest@localhost",
+			Help:     amqpURLHelp,
+		})
+	args.amqp.QName = parser.String("", "amqp-qname", &argparse.Options{
+		Required: false,
+		Default:  name,
+		Help:     amqpQNameHelp,
+	})
+	args.log.Level = parser.Selector(
+		"",
+		"log-level",
+		[]string{"panic", "fatal", "error", "warn", "info", "debug"},
+		&argparse.Options{
+			Required: false,
+			Default:  "info",
 		})
 }
 
@@ -85,15 +102,19 @@ func run() error {
 		*args.provider.Name,
 		*args.provider.URL,
 		*args.provider.Key)
-
-	rt, err := api.New(app.New(lr, sr))
 	if err != nil {
 		return err
 	}
 
-	rt.Logger.Fatal(rt.Start(fmt.Sprintf(":%d", *args.port)))
+	ap := app.New(lr, sr)
 
-	return nil
+	lv, err := log.ParseLevel(*args.log.Level)
+	if err != nil {
+		return err
+	}
+	log.SetLevel(lv)
+
+	return amqpapi.Run(ap, *args.amqp.URL, *args.amqp.QName)
 }
 
 func main() {

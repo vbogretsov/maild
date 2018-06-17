@@ -7,33 +7,32 @@ import (
 	"os"
 	"path"
 
-	"github.com/vbogretsov/go-validation"
+	"github.com/vbogretsov/maild/app"
 )
 
-const errTemplateNotFound = "template '%s/%s.msg' not found"
-
-type Loader interface {
-	Load(lang, name string) (io.Reader, error)
-}
+const errorTemplateNotFound = "template '%s/%s.msg' not found"
 
 type fsloader struct {
 	root string
 }
 
-func New(root string) (Loader, error) {
+// New creates a new loader. The exact loader type is determined by root prefix.
+func New(root string) (app.Loader, error) {
 	// TODO: add loaders from network storages: S3, GlusterFs, etc.
 	return fsloader{root: root}, nil
 }
 
-func (self fsloader) Load(lang, name string) (io.Reader, error) {
-	fname := path.Join(self.root, lang, fmt.Sprintf("%s.msg", name))
+// Load loads a template with the language and name provided from the local
+// file system.
+func (ld fsloader) Load(lang, name string) (io.Reader, error) {
+	fname := path.Join(ld.root, lang, fmt.Sprintf("%s.msg", name))
 
 	file, err := os.Open(fname)
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, validation.Error(
-				fmt.Errorf(errTemplateNotFound, lang, name))
+			e := fmt.Errorf(errorTemplateNotFound, lang, name)
+			return nil, app.ArgumentError(e)
 		}
 
 		return nil, err

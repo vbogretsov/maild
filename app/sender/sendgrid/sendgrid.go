@@ -2,18 +2,16 @@ package sendgrid
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"net/http"
 
+	"github.com/pkg/errors"
 	api "github.com/sendgrid/sendgrid-go"
-	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/vbogretsov/maild/app"
 	"github.com/vbogretsov/maild/model"
 )
 
 const v3URL = "/v3/mail/send"
-
-var valid = validator.New()
 
 type content struct {
 	Type  string `json:"type"`
@@ -24,24 +22,31 @@ type personalization struct {
 	Subject string          `json:"subject"`
 	To      []model.Address `json:"to"`
 	Cc      []model.Address `json:"cc,omitempty"`
+	Bcc     []model.Address `json:"bcc,omitempty"`
 }
 
 type message struct {
-	From            model.Address     `json:"from"`
-	Personalization sgPersonalization `json:"personalization"`
-	Content         sgContent         `json:"content"`
+	From            model.Address   `json:"from"`
+	Personalization personalization `json:"personalization"`
+	Content         content         `json:"content"`
 }
 
+// Sender represents a SendGrid sender.
 type Sender struct {
 	url string
 	key string
 }
 
-func (self Sender) Send(msg model.Message) error {
-	if err := valid.Struct(message); err != nil {
-		return err
+// New creates new SendGrid sender.
+func New(url, key string) app.Sender {
+	return &Sender{
+		url: url,
+		key: key,
 	}
+}
 
+// Send sends an email via SendGrid API.
+func (s Sender) Send(msg model.Message) error {
 	data := message{
 		From: msg.From,
 		Personalization: personalization{
@@ -56,14 +61,14 @@ func (self Sender) Send(msg model.Message) error {
 		},
 	}
 
-	data, err := json.Marshal(&data)
+	args, err := json.Marshal(&data)
 	if err != nil {
 		return err
 	}
 
-	request := api.GetRequest(self.key, v3URL, self.url)
+	request := api.GetRequest(s.key, v3URL, s.url)
 	request.Method = http.MethodPost
-	request.Body = data
+	request.Body = args
 
 	resp, err := api.API(request)
 	if err != nil {
@@ -71,7 +76,8 @@ func (self Sender) Send(msg model.Message) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		// TODO: log respinse body.
+		// TODO: log response body.
+
 		return errors.Errorf("SendGrid API error %d", resp.StatusCode)
 	}
 

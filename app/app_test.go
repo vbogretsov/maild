@@ -1,200 +1,70 @@
-package app
+package app_test
 
 import (
-	"fmt"
-	"io"
-	"strings"
+	"reflect"
 	"testing"
 
-	"github.com/vbogretsov/gotest"
+	"github.com/kr/pretty"
 
+	"github.com/vbogretsov/maild/app"
 	"github.com/vbogretsov/maild/model"
 )
 
-const example = `
-From:
-  Email: levelup@levelup.com
-  Name: LevelUp
-Subject: Subject
-BodyType: "text/plain"
-Body: |
-  Hello {{.Username}}!
-  This is test body!
-`
+func TestSendMail(t *testing.T) {
+	lr := NewLoader()
+	sd := NewSender()
+	ap := app.New(lr, sd)
 
-type Loader struct {
-	templates map[string]string
-}
-
-func (self *Loader) Load(lang, name string) (io.Reader, error) {
-	id := fmt.Sprintf("%s-%s", lang, name)
-	text, ok := self.templates[id]
-	if !ok {
-		return nil, fmt.Errorf("template %s not found", id)
-	}
-	return strings.NewReader(text), nil
-}
-
-type Sender struct {
-	inboxes map[model.Address][]model.Message
-}
-
-func (self *Sender) send(msg model.Message, recs []model.Address) {
-	for _, rec := range recs {
-		_, ok := self.inboxes[rec]
-		if !ok {
-			self.inboxes[rec] = []model.Message{}
-		}
-		self.inboxes[rec] = append(self.inboxes[rec], msg)
-	}
-}
-
-func (self *Sender) Send(msg model.Message) error {
-	self.send(msg, msg.To)
-	self.send(msg, msg.Cc)
-	self.send(msg, msg.Bcc)
-	return nil
-}
-
-func configure(t *testing.T) *gotest.Session {
-	s := gotest.NewSession(t)
-
-	s.Register(gotest.Fixture{
-		Provider: func() *Loader {
-			return &Loader{
-				templates: map[string]string{
-					"en-1": example,
-				},
+	for _, fx := range fixtures {
+		t.Run(fx.name, func(t *testing.T) {
+			err := ap.SendMail(fx.request)
+			if !reflect.DeepEqual(fx.result, err) {
+				t.Error(pretty.Diff(fx.result, err))
+				t.Logf("error: %v", err)
 			}
-		},
+		})
+	}
+
+	t.Run("MailSent", func(t *testing.T) {
+		to := []model.Address{
+			{
+				Email: "user@mail.com",
+				Name:  "",
+			},
+		}
+		req := model.Request{
+			TemplateLang: "en",
+			TemplateName: "valid",
+			TemplateArgs: map[string]interface{}{
+				"Username": "SuperUser",
+			},
+			To: to,
+		}
+		err := ap.SendMail(req)
+		if err != nil {
+			t.Errorf("expected nil, but got error '%v'", err)
+			t.FailNow()
+		}
+		exp := model.Message{
+			Subject:  "Subject",
+			From:     model.Address{Email: "user@mail.com", Name: "Sender"},
+			BodyType: "text/plain",
+			Body:     expectedBody,
+			To:       to,
+			Cc:       []model.Address{},
+			Bcc:      []model.Address{},
+		}
+		if len(sd.inbox) == 0 {
+			t.Error("message was not sent")
+			t.FailNow()
+		}
+		if len(sd.inbox) > 1 {
+			t.Error("to many messages sent")
+			t.FailNow()
+		}
+		act := sd.inbox[0]
+		if !reflect.DeepEqual(exp, act) {
+			t.Error(pretty.Diff(exp, act))
+		}
 	})
-
-	s.Register(gotest.Fixture{
-		Provider: func() *Sender {
-			return &Sender{
-				inboxes: map[model.Address][]model.Message{},
-			}
-		},
-	})
-
-	s.Register(gotest.Fixture{
-		Provider: func(loader *Loader, sender *Sender) *App {
-			return New(loader, sender)
-		},
-	})
-
-	return s
-}
-
-func TestApp(t *testing.T) {
-	s := configure(t)
-	defer s.Close()
-
-	s.Run(func(sender *Sender, app *App, assert *gotest.Assert) {
-		recipient := "to1@mail.com"
-		body := fmt.Sprintf("Hello user@mail.com!\nThis is test body!\n")
-
-		req := model.Request{
-			TemplateLang: "en",
-			TemplateName: "1",
-			TemplateArgs: map[string]interface{}{
-				"Username": "user@mail.com",
-			},
-			To: []model.Address{
-				{
-					Email: recipient,
-				},
-			},
-		}
-
-		err := app.SendMail(req)
-
-		assert.Nil(err)
-		inbox, ok := sender.inboxes[model.Address{Email: recipient}]
-		assert.True(ok)
-		assert.True(len(inbox) > 0)
-		msg := inbox[0]
-		assert.Equal(msg.Subject, "Subject")
-		assert.Equal(msg.BodyType, "text/plain")
-		assert.Equal(msg.From.Email, "levelup@levelup.com")
-		assert.Equal(msg.From.Name, "LevelUp")
-		assert.Equal(msg.Body, body)
-
-	}, "TestSendMailSuccess")
-
-	s.Run(func(sender *Sender, app *App, assert *gotest.Assert) {
-		req := model.Request{
-			TemplateLang: "en",
-			TemplateName: "1",
-			TemplateArgs: map[string]interface{}{
-				"Username": "user@mail.com",
-			},
-		}
-
-		err := app.SendMail(req)
-
-		assert.NotNil(err)
-
-	}, "TestSendMailFailedIfMissingRecipients")
-
-	s.Run(func(sender *Sender, app *App, assert *gotest.Assert) {
-		recipient := "to1@mail.com"
-		req := model.Request{
-			TemplateName: "1",
-			TemplateArgs: map[string]interface{}{
-				"Username": "user@mail.com",
-			},
-			To: []model.Address{
-				{
-					Email: recipient,
-				},
-			},
-		}
-
-		err := app.SendMail(req)
-
-		assert.NotNil(err)
-
-	}, "TestSendMailFailedIfMissingLang")
-
-	s.Run(func(sender *Sender, app *App, assert *gotest.Assert) {
-		recipient := "to1@mail.com"
-		req := model.Request{
-			TemplateLang: "en",
-			TemplateArgs: map[string]interface{}{
-				"Username": "user@mail.com",
-			},
-			To: []model.Address{
-				{
-					Email: recipient,
-				},
-			},
-		}
-
-		err := app.SendMail(req)
-
-		assert.NotNil(err)
-
-	}, "TestSendMailFailedIfMissingName")
-
-	s.Run(func(sender *Sender, app *App, assert *gotest.Assert) {
-		recipient := "to1@mail.com"
-		req := model.Request{
-			TemplateLang: "en",
-			TemplateName: "2",
-			TemplateArgs: map[string]interface{}{
-				"Username": "user@mail.com",
-			},
-			To: []model.Address{
-				{
-					Email: recipient,
-				},
-			},
-		}
-
-		err := app.SendMail(req)
-
-		assert.NotNil(err)
-
-	}, "TestSendMailFailedIfTempalteNotFound")
 }

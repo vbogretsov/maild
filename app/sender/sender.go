@@ -1,13 +1,23 @@
 package sender
 
 import (
-	"github.com/vbogretsov/maild/model"
+	"fmt"
+
+	"github.com/vbogretsov/maild/app"
+	"github.com/vbogretsov/maild/app/sender/sendgrid"
 )
 
-type Sender interface {
-	Send(model.Message) error
+type factory func(url, key string) app.Sender
+
+var senders = map[string]factory{
+	"sendgrid": sendgrid.New,
 }
 
-func New(name, url, key string) (Sender, error) {
-	return nil, nil
+// New creates a new sender.
+func New(name, url, key string) (app.Sender, error) {
+	fn, ok := senders[name]
+	if !ok {
+		return nil, fmt.Errorf("unsupported sender %s", name)
+	}
+	return fn(url, key), nil
 }
