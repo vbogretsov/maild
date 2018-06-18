@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	errorRootFormat          = "root must start with protocol://"
+	errorRootFormat          = "templates path must start with protocol://"
 	errorUnsupportedProtocol = "protocol %s is unsupported"
 	protocolDelimiter        = "://"
 )

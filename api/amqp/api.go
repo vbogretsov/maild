@@ -15,6 +15,8 @@ import (
 
 // Run starts consuming client requests.
 func Run(ap *app.App, url, qname string) error {
+	log.Debugf("connecting AMQP broker %s", url)
+
 	cn, err := amqp.Dial(url)
 	if err != nil {
 		return err
@@ -76,6 +78,8 @@ func Run(ap *app.App, url, qname string) error {
 		return err
 	}
 
+	log.Debug("AMQP broker connected")
+
 	for i := range reqs {
 		err := sendmail(ap, i)
 		if err != nil {
@@ -106,9 +110,17 @@ func sendmail(ap *app.App, i amqp.Delivery) error {
 		return err
 	}
 
+	log.WithFields(log.Fields{
+		"request": req,
+	}).Debug("received request")
+
 	if err := ap.SendMail(req); err != nil {
 		return err
 	}
+
+	log.WithFields(log.Fields{
+		"request": req,
+	}).Debug("mail sent")
 
 	return nil
 }

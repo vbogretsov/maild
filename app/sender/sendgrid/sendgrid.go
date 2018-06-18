@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	api "github.com/sendgrid/sendgrid-go"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/vbogretsov/maild/app"
 	"github.com/vbogretsov/maild/model"
@@ -77,9 +78,13 @@ func (s Sender) Send(msg model.Message) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		// TODO: log response body.
+		log.WithFields(log.Fields{
+			"request":      data,
+			"responseCode": resp.StatusCode,
+			"responseBody": resp.Body,
+		}).Debug("sendgrid call failed")
 
-		return errors.Errorf("SendGrid API error %d", resp.StatusCode)
+		return errors.Errorf("sendgrid api error %d", resp.StatusCode)
 	}
 
 	return nil

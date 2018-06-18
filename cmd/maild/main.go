@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/akamensky/argparse"
+	joonix "github.com/joonix/log"
 	log "github.com/sirupsen/logrus"
 
 	amqpapi "github.com/vbogretsov/maild/api/amqp"
@@ -38,10 +41,24 @@ type argT struct {
 }
 
 var (
-	args       = argT{}
-	parser     = argparse.NewParser(fmt.Sprintf("%s %s", name, version), usage)
-	logLevels  = []string{"panic", "fatal", "error", "warn", "info", "debug"}
-	logFormats = []string{logFormatKubernetes, logFormatJSON}
+	args      = argT{}
+	parser    = argparse.NewParser(fmt.Sprintf("%s %s", name, version), usage)
+	logLevels = []string{
+		"panic",
+		"fatal",
+		"error",
+		"warn",
+		"info",
+		"debug",
+	}
+	logFormats = []string{
+		logFormatKubernetes,
+		logFormatJSON,
+	}
+	logFormatters = map[string]logrus.Formatter{
+		logFormatJSON:       &log.JSONFormatter{},
+		logFormatKubernetes: &joonix.FluentdFormatter{},
+	}
 )
 
 func init() {
@@ -131,6 +148,8 @@ func run() error {
 		return err
 	}
 	log.SetLevel(lv)
+
+	log.SetFormatter(logFormatters[*args.log.Format])
 
 	return amqpapi.Run(ap, *args.amqp.URL, *args.amqp.QName)
 }
