@@ -8,6 +8,7 @@ import (
 
 	"github.com/vbogretsov/go-validation"
 
+	"github.com/vbogretsov/maild/app"
 	"github.com/vbogretsov/maild/model"
 )
 
@@ -122,12 +123,14 @@ var fixtures = []fixture{
 				},
 			},
 		},
-		result: validation.Errors([]error{
-			validation.StructError{
-				Field:  "templateLang",
-				Errors: validation.Error(errorStrCannotBeBlank),
-			},
-		}),
+		result: app.ArgumentError{
+			Err: validation.Errors([]error{
+				validation.StructError{
+					Field:  "templateLang",
+					Errors: validation.Error(errorStrCannotBeBlank),
+				},
+			}),
+		},
 	},
 	{
 		name: "ErrorIfMissingTemplateName",
@@ -143,12 +146,14 @@ var fixtures = []fixture{
 				},
 			},
 		},
-		result: validation.Errors([]error{
-			validation.StructError{
-				Field:  "templateName",
-				Errors: validation.Error(errorStrCannotBeBlank),
-			},
-		}),
+		result: app.ArgumentError{
+			Err: validation.Errors([]error{
+				validation.StructError{
+					Field:  "templateName",
+					Errors: validation.Error(errorStrCannotBeBlank),
+				},
+			}),
+		},
 	},
 	{
 		name: "ErrorIfMissingRecipients",
@@ -159,12 +164,14 @@ var fixtures = []fixture{
 				"Username": "user@mail.com",
 			},
 		},
-		result: validation.Errors([]error{
-			validation.StructError{
-				Field:  "",
-				Errors: validation.Error(errorMissingRecipients),
-			},
-		}),
+		result: app.ArgumentError{
+			Err: validation.Errors([]error{
+				validation.StructError{
+					Field:  "",
+					Errors: validation.Error(errorMissingRecipients),
+				},
+			}),
+		},
 	},
 	{
 		name: "ErrorIfRecipientMissingEmail",
@@ -181,24 +188,26 @@ var fixtures = []fixture{
 				},
 			},
 		},
-		result: validation.Errors([]error{
-			validation.StructError{
-				Field: "to",
-				Errors: []error{
-					validation.Errors([]error{
-						validation.SliceError{
-							Index: 0,
-							Errors: []error{
-								validation.StructError{
-									Field:  "Email",
-									Errors: validation.Error(errorStrInvalidEmail),
+		result: app.ArgumentError{
+			Err: validation.Errors([]error{
+				validation.StructError{
+					Field: "to",
+					Errors: []error{
+						validation.Errors([]error{
+							validation.SliceError{
+								Index: 0,
+								Errors: []error{
+									validation.StructError{
+										Field:  "Email",
+										Errors: validation.Error(errorStrInvalidEmail),
+									},
 								},
 							},
-						},
-					}),
+						}),
+					},
 				},
-			},
-		}),
+			}),
+		},
 	},
 	{
 		name: "ErrorIfRecipientEmailInvalid",
@@ -215,24 +224,26 @@ var fixtures = []fixture{
 				},
 			},
 		},
-		result: validation.Errors([]error{
-			validation.StructError{
-				Field: "to",
-				Errors: []error{
-					validation.Errors([]error{
-						validation.SliceError{
-							Index: 0,
-							Errors: []error{
-								validation.StructError{
-									Field:  "Email",
-									Errors: validation.Error(errorStrInvalidEmail),
+		result: app.ArgumentError{
+			Err: validation.Errors([]error{
+				validation.StructError{
+					Field: "to",
+					Errors: []error{
+						validation.Errors([]error{
+							validation.SliceError{
+								Index: 0,
+								Errors: []error{
+									validation.StructError{
+										Field:  "Email",
+										Errors: validation.Error(errorStrInvalidEmail),
+									},
 								},
 							},
-						},
-					}),
+						}),
+					},
 				},
-			},
-		}),
+			}),
+		},
 	},
 	{
 		name: "ErrorIfTemplateNotFound",
@@ -249,7 +260,9 @@ var fixtures = []fixture{
 				},
 			},
 		},
-		result: validation.Error("template en-xxx not found"),
+		result: app.ArgumentError{
+			Err: validation.Error("template en-xxx not found"),
+		},
 	},
 	{
 		name: "ErrorIfMissingBodyType",
@@ -445,7 +458,8 @@ func (self *Loader) Load(lang, name string) (io.Reader, error) {
 	id := fmt.Sprintf("%s-%s", lang, name)
 	text, ok := self.templates[id]
 	if !ok {
-		return nil, validation.Errorf("template %s not found", id)
+		e := validation.Errorf("template %s not found", id)
+		return nil, app.ArgumentError{Err: e}
 	}
 	return strings.NewReader(text), nil
 }

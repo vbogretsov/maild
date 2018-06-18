@@ -7,6 +7,8 @@ const (
 	providerKeyHelp   = `SMTP service provider security key`
 	providerNameHelp  = `SMTP provider name, allowed valus: [sendgrid, log]`
 	amqpURLHelp       = `AMQP broker url`
-	amqpQNameHelp     = `AMQP quee name`
+	amqpQNameHelp     = `AMQP queue name`
 	templatesPathHelp = `Email templates location`
+	logLevelHelp      = `Log level, allowed values: %v`
+	logFormatHelp     = `Log output format, allowed values %v`
 )

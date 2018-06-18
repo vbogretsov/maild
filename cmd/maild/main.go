@@ -13,6 +13,11 @@ import (
 	"github.com/vbogretsov/maild/app/sender"
 )
 
+const (
+	logFormatKubernetes = "kubernetes"
+	logFormatJSON       = "json"
+)
+
 type argT struct {
 	provider struct {
 		Name *string
@@ -27,13 +32,16 @@ type argT struct {
 		Path *string
 	}
 	log struct {
-		Level *string
+		Level  *string
+		Format *string
 	}
 }
 
 var (
-	args   = argT{}
-	parser = argparse.NewParser(fmt.Sprintf("%s %s", name, version), usage)
+	args       = argT{}
+	parser     = argparse.NewParser(fmt.Sprintf("%s %s", name, version), usage)
+	logLevels  = []string{"panic", "fatal", "error", "warn", "info", "debug"}
+	logFormats = []string{logFormatKubernetes, logFormatJSON}
 )
 
 func init() {
@@ -81,10 +89,20 @@ func init() {
 	args.log.Level = parser.Selector(
 		"",
 		"log-level",
-		[]string{"panic", "fatal", "error", "warn", "info", "debug"},
+		logLevels,
 		&argparse.Options{
 			Required: false,
 			Default:  "info",
+			Help:     fmt.Sprintf(logLevelHelp, logLevels),
+		})
+	args.log.Format = parser.Selector(
+		"",
+		"log-format",
+		logFormats,
+		&argparse.Options{
+			Required: false,
+			Default:  logFormatJSON,
+			Help:     fmt.Sprintf(logFormatHelp, logFormats),
 		})
 }
 

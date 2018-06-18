@@ -38,11 +38,12 @@ type Sender struct {
 }
 
 // New creates new SendGrid sender.
-func New(url, key string) app.Sender {
-	return &Sender{
+func New(url, key string) (app.Sender, error) {
+	s := Sender{
 		url: url,
 		key: key,
 	}
+	return &s, nil
 }
 
 // Send sends an email via SendGrid API.

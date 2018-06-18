@@ -1,42 +1,39 @@
 package loader
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
-	"io"
-	"os"
-	"path"
+	"strings"
 
 	"github.com/vbogretsov/maild/app"
+	"github.com/vbogretsov/maild/app/loader/fs"
 )
 
-const errorTemplateNotFound = "template '%s/%s.msg' not found"
+const (
+	errorRootFormat          = "root must start with protocol://"
+	errorUnsupportedProtocol = "protocol %s is unsupported"
+	protocolDelimiter        = "://"
+)
 
-type fsloader struct {
-	root string
+type factory func(string) (app.Loader, error)
+
+var loaders = map[string]factory{
+	"fs": fs.New,
 }
 
-// New creates a new loader. The exact loader type is determined by root prefix.
+// New creates a new loader, the exact loader type is being detected by prefix.
 func New(root string) (app.Loader, error) {
-	// TODO: add loaders from network storages: S3, GlusterFs, etc.
-	return fsloader{root: root}, nil
-}
-
-// Load loads a template with the language and name provided from the local
-// file system.
-func (ld fsloader) Load(lang, name string) (io.Reader, error) {
-	fname := path.Join(ld.root, lang, fmt.Sprintf("%s.msg", name))
-
-	file, err := os.Open(fname)
-
-	if err != nil {
-		if os.IsNotExist(err) {
-			e := fmt.Errorf(errorTemplateNotFound, lang, name)
-			return nil, app.ArgumentError(e)
-		}
-
-		return nil, err
+	n := strings.Index(root, protocolDelimiter)
+	if n == -1 {
+		return nil, errors.New(errorRootFormat)
 	}
 
-	return bufio.NewReader(file), nil
+	prefix := root[0:n]
+
+	fn, ok := loaders[prefix]
+	if !ok {
+		return nil, fmt.Errorf(errorUnsupportedProtocol, prefix)
+	}
+
+	return fn(root[n+len(protocolDelimiter):])
 }

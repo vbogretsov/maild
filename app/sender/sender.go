@@ -7,7 +7,7 @@ import (
 	"github.com/vbogretsov/maild/app/sender/sendgrid"
 )
 
-type factory func(url, key string) app.Sender
+type factory func(url, key string) (app.Sender, error)
 
 var senders = map[string]factory{
 	"sendgrid": sendgrid.New,
@@ -19,5 +19,5 @@ func New(name, url, key string) (app.Sender, error) {
 	if !ok {
 		return nil, fmt.Errorf("unsupported sender %s", name)
 	}
-	return fn(url, key), nil
+	return fn(url, key)
 }

@@ -13,7 +13,14 @@ import (
 )
 
 // ArgumentError represents an error caused by user input.
-type ArgumentError error
+type ArgumentError struct {
+	Err error
+}
+
+// Error returns string representation of an argument error.
+func (e ArgumentError) Error() string {
+	return e.Err.Error()
+}
 
 // Loader represents interface of templates loader.
 type Loader interface {
@@ -43,7 +50,7 @@ func New(loader Loader, sender Sender) *App {
 // SendMail build email from template and sends it.
 func (ap *App) SendMail(req model.Request) error {
 	if err := validateRequest(&req); err != nil {
-		return ArgumentError(err)
+		return ArgumentError{err}
 	}
 
 	body, err := ap.loader.Load(req.TemplateLang, req.TemplateName)
