@@ -1,20 +1,22 @@
-#!/bin/sh
+#! /bin/sh
 
-term()
+function term()
 {
-    kill -15 "$child"
-    wait "$child"
+    kill -15 $child
+    wait $child
 }
 
 trap term SIGTERM
 
-/bin/maild	--provider-url $MAILD_PROVIDER_URL \
-			--provider-key $MAILD_PROVIDER_KEY \
-			--provider-name $MAILD_PROVIDER_NAME \
-			--service-name $MAILD_SERVICE_NAME \
-			--broker-url $MAILD_BROKER_URL \
-			--log-level $MAILD_LOG_LEVEL \
-			--template-dir /var/lib/maild/templates &
+exec "`maild \
+	--provider-url ${MAILD_PROVIDER_URL} \
+	--provider-key ${MAILD_PROVIDER_KEY} \
+	--provider-name ${MAILD_PROVIDER_NAME} \
+	--templates-path ${MAILD_TEMPLATES_PATH} \
+	--amqp-url ${MAILD_AMQP_URL} \
+	--log-level ${MAILD_LOG_LEVEL} \
+	--log-format ${MAILD_LOG_FORMAT} \
+	`" &
 
 child=$!
-wait "$child"
+wait $child

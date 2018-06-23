@@ -2,11 +2,14 @@ version: "3"
 services:
   rabbitmq:
     container_name: maild-rabbitmq
-    image: "rabbitmq:3-alpine"
+    image: rabbitmq:3-alpine
     ports:
     - "5672:5672"
-    healthcheck:
-      test: "nc -vz rabbitmq 5672"
-      interval: 1s
-      timeout: 1s
-      retries: 10
+  maild:
+    container_name: maild
+    image: maild:1
+    restart: on-failure
+    environment:
+    - MAILD_PROVIDER_URL=http://localhost
+    - MAILD_PROVIDER_NAME=sendgrid
+    - MAILD_PROVIDER_KEY=xxx

@@ -1,12 +1,10 @@
 .git/
 .env/
 .venv/
+.gitignore
+app/
+api/
 cmd/
 model/
-pubsub/
-sendgrid/
-server/
 LICENSE
-.gitignore
 README.md
-Makefile
