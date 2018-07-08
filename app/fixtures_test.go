@@ -193,17 +193,15 @@ var fixtures = []fixture{
 				validation.StructError{
 					Field: "to",
 					Errors: []error{
-						validation.Errors([]error{
-							validation.SliceError{
-								Index: 0,
-								Errors: []error{
-									validation.StructError{
-										Field:  "Email",
-										Errors: validation.Error(errorStrInvalidEmail),
-									},
+						validation.SliceError{
+							Index: 0,
+							Errors: []error{
+								validation.StructError{
+									Field:  "Email",
+									Errors: validation.Error(errorStrInvalidEmail),
 								},
 							},
-						}),
+						},
 					},
 				},
 			}),
@@ -229,17 +227,15 @@ var fixtures = []fixture{
 				validation.StructError{
 					Field: "to",
 					Errors: []error{
-						validation.Errors([]error{
-							validation.SliceError{
-								Index: 0,
-								Errors: []error{
-									validation.StructError{
-										Field:  "Email",
-										Errors: validation.Error(errorStrInvalidEmail),
-									},
+						validation.SliceError{
+							Index: 0,
+							Errors: []error{
+								validation.StructError{
+									Field:  "Email",
+									Errors: validation.Error(errorStrInvalidEmail),
 								},
 							},
-						}),
+						},
 					},
 				},
 			}),
@@ -369,12 +365,10 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "From",
 				Errors: []error{
-					validation.Errors([]error{
-						validation.StructError{
-							Field:  "Email",
-							Errors: validation.Error(errorStrInvalidEmail),
-						},
-					}),
+					validation.StructError{
+						Field:  "Email",
+						Errors: validation.Error(errorStrInvalidEmail),
+					},
 				},
 			},
 		}),
@@ -397,12 +391,10 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "From",
 				Errors: []error{
-					validation.Errors([]error{
-						validation.StructError{
-							Field:  "Email",
-							Errors: validation.Error(errorStrInvalidEmail),
-						},
-					}),
+					validation.StructError{
+						Field:  "Email",
+						Errors: validation.Error(errorStrInvalidEmail),
+					},
 				},
 			},
 		}),
@@ -425,12 +417,10 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "From",
 				Errors: []error{
-					validation.Errors([]error{
-						validation.StructError{
-							Field:  "Email",
-							Errors: validation.Error(errorStrInvalidEmail),
-						},
-					}),
+					validation.StructError{
+						Field:  "Email",
+						Errors: validation.Error(errorStrInvalidEmail),
+					},
 				},
 			},
 		}),
