@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	"github.com/vbogretsov/go-validation/jsonerr"
+	jsonerr "github.com/vbogretsov/go-validation/json"
 
 	"github.com/vbogretsov/maild/app"
 	"github.com/vbogretsov/maild/model"
@@ -85,9 +85,12 @@ func Run(ap *app.App, url, qname string) error {
 		if err != nil {
 			switch err.(type) {
 			case app.ArgumentError:
-				e := err.(validation.Errors)
+				e := jsonerr.New(
+					err.(validation.Errors),
+					jsonerr.DefaultFormatter,
+					jsonerr.DefaultJoiner)
 				log.WithFields(log.Fields{
-					"error": jsonerr.Errors(e),
+					"error": e,
 				}).Error("invalid request parameters")
 			default:
 				log.WithFields(log.Fields{

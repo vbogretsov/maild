@@ -1,7 +1,6 @@
 package app_test
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -13,12 +12,13 @@ import (
 )
 
 const (
-	errorStrCannotBeBlank     = "cannot be blank"
-	errorStrInvalidEmail      = "invalid email"
-	errorMissingRecipients    = "missing recipients"
-	errorInvalidBodyTypeEmpty = "invalid body type '', allowed values [text/plain text/html]"
-	errorInvalidBodyTypeXxx   = "invalid body type 'text/xxx', allowed values [text/plain text/html]"
+	errorStrCannotBeBlank  = "cannot be blank"
+	errorStrInvalidEmail   = "invalid email"
+	errorMissingRecipients = "missing recipients"
+	errorInvalidBodyType   = "invalid body type"
 )
+
+var bodyTypes = []interface{}{"text/plain", "text/html"}
 
 const expectedBody = `Hello SuperUser!
 This is test body!
@@ -126,8 +126,10 @@ var fixtures = []fixture{
 		result: app.ArgumentError{
 			Err: validation.Errors([]error{
 				validation.StructError{
-					Field:  "templateLang",
-					Errors: validation.Error(errorStrCannotBeBlank),
+					Field: "templateLang",
+					Errors: []error{
+						validation.Error{Message: errorStrCannotBeBlank},
+					},
 				},
 			}),
 		},
@@ -149,8 +151,10 @@ var fixtures = []fixture{
 		result: app.ArgumentError{
 			Err: validation.Errors([]error{
 				validation.StructError{
-					Field:  "templateName",
-					Errors: validation.Error(errorStrCannotBeBlank),
+					Field: "templateName",
+					Errors: []error{
+						validation.Error{Message: errorStrCannotBeBlank},
+					},
 				},
 			}),
 		},
@@ -167,8 +171,10 @@ var fixtures = []fixture{
 		result: app.ArgumentError{
 			Err: validation.Errors([]error{
 				validation.StructError{
-					Field:  "",
-					Errors: validation.Error(errorMissingRecipients),
+					Field: "",
+					Errors: []error{
+						validation.Error{Message: errorMissingRecipients},
+					},
 				},
 			}),
 		},
@@ -193,17 +199,19 @@ var fixtures = []fixture{
 				validation.StructError{
 					Field: "to",
 					Errors: []error{
-						validation.Errors([]error{
-							validation.SliceError{
-								Index: 0,
-								Errors: []error{
-									validation.StructError{
-										Field:  "Email",
-										Errors: validation.Error(errorStrInvalidEmail),
+						validation.SliceError{
+							Index: 0,
+							Errors: []error{
+								validation.StructError{
+									Field: "Email",
+									Errors: []error{
+										validation.Error{
+											Message: errorStrInvalidEmail,
+										},
 									},
 								},
 							},
-						}),
+						},
 					},
 				},
 			}),
@@ -229,17 +237,17 @@ var fixtures = []fixture{
 				validation.StructError{
 					Field: "to",
 					Errors: []error{
-						validation.Errors([]error{
-							validation.SliceError{
-								Index: 0,
-								Errors: []error{
-									validation.StructError{
-										Field:  "Email",
-										Errors: validation.Error(errorStrInvalidEmail),
-									},
+						validation.SliceError{
+							Index: 0,
+							Errors: []error{
+								validation.StructError{
+									Field: "Email",
+									Errors: []error{validation.Error{
+										Message: errorStrInvalidEmail,
+									}},
 								},
 							},
-						}),
+						},
 					},
 				},
 			}),
@@ -261,7 +269,15 @@ var fixtures = []fixture{
 			},
 		},
 		result: app.ArgumentError{
-			Err: validation.Error("template en-xxx not found"),
+			Err: validation.Errors([]error{
+				validation.Error{
+					Message: "template not found",
+					Params: validation.Params{
+						"lang": "en",
+						"name": "xxx",
+					},
+				},
+			}),
 		},
 	},
 	{
@@ -282,8 +298,16 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "BodyType",
 				Errors: []error{
-					errors.New(errorStrCannotBeBlank),
-					errors.New(errorInvalidBodyTypeEmpty),
+					validation.Error{
+						Message: errorStrCannotBeBlank,
+					},
+					validation.Error{
+						Message: errorInvalidBodyType,
+						Params: validation.Params{
+							"unsupported": "",
+							"supported":   bodyTypes,
+						},
+					},
 				},
 			},
 		}),
@@ -304,8 +328,16 @@ var fixtures = []fixture{
 		},
 		result: validation.Errors([]error{
 			validation.StructError{
-				Field:  "BodyType",
-				Errors: validation.Error(errorInvalidBodyTypeXxx),
+				Field: "BodyType",
+				Errors: []error{
+					validation.Error{
+						Message: errorInvalidBodyType,
+						Params: validation.Params{
+							"unsupported": "text/xxx",
+							"supported":   bodyTypes,
+						},
+					},
+				},
 			},
 		}),
 	},
@@ -325,8 +357,10 @@ var fixtures = []fixture{
 		},
 		result: validation.Errors([]error{
 			validation.StructError{
-				Field:  "Body",
-				Errors: validation.Error(errorStrCannotBeBlank),
+				Field: "Body",
+				Errors: []error{validation.Error{
+					Message: errorStrCannotBeBlank,
+				}},
 			},
 		}),
 	},
@@ -346,8 +380,10 @@ var fixtures = []fixture{
 		},
 		result: validation.Errors([]error{
 			validation.StructError{
-				Field:  "Subject",
-				Errors: validation.Error(errorStrCannotBeBlank),
+				Field: "Subject",
+				Errors: []error{validation.Error{
+					Message: errorStrCannotBeBlank,
+				}},
 			},
 		}),
 	},
@@ -369,12 +405,12 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "From",
 				Errors: []error{
-					validation.Errors([]error{
-						validation.StructError{
-							Field:  "Email",
-							Errors: validation.Error(errorStrInvalidEmail),
-						},
-					}),
+					validation.StructError{
+						Field: "Email",
+						Errors: []error{validation.Error{
+							Message: errorStrInvalidEmail,
+						}},
+					},
 				},
 			},
 		}),
@@ -397,12 +433,12 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "From",
 				Errors: []error{
-					validation.Errors([]error{
-						validation.StructError{
-							Field:  "Email",
-							Errors: validation.Error(errorStrInvalidEmail),
-						},
-					}),
+					validation.StructError{
+						Field: "Email",
+						Errors: []error{validation.Error{
+							Message: errorStrInvalidEmail,
+						}},
+					},
 				},
 			},
 		}),
@@ -425,12 +461,12 @@ var fixtures = []fixture{
 			validation.StructError{
 				Field: "From",
 				Errors: []error{
-					validation.Errors([]error{
-						validation.StructError{
-							Field:  "Email",
-							Errors: validation.Error(errorStrInvalidEmail),
-						},
-					}),
+					validation.StructError{
+						Field: "Email",
+						Errors: []error{validation.Error{
+							Message: errorStrInvalidEmail,
+						}},
+					},
 				},
 			},
 		}),
@@ -458,8 +494,16 @@ func (self *Loader) Load(lang, name string) (io.Reader, error) {
 	id := fmt.Sprintf("%s-%s", lang, name)
 	text, ok := self.templates[id]
 	if !ok {
-		e := validation.Errorf("template %s not found", id)
-		return nil, app.ArgumentError{Err: e}
+		e := validation.Error{
+			Message: "template not found",
+			Params: validation.Params{
+				"lang": lang,
+				"name": name,
+			},
+		}
+		return nil, app.ArgumentError{
+			Err: validation.Errors([]error{e}),
+		}
 	}
 	return strings.NewReader(text), nil
 }

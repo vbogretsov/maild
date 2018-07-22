@@ -1,8 +1,6 @@
 package app
 
 import (
-	"errors"
-
 	"github.com/vbogretsov/go-validation"
 	"github.com/vbogretsov/go-validation/rule"
 	"github.com/vbogretsov/maild/model"
@@ -12,7 +10,7 @@ const (
 	errorStrRequired       = "cannot be blank"
 	errorMissingRecipients = "missing recipients"
 	errorInvalidEmail      = "invalid email"
-	errorInvalidBodyType   = "invalid body type '%v', allowed values %v"
+	errorInvalidBodyType   = "invalid body type"
 )
 
 var (
@@ -72,7 +70,7 @@ func messageBody(v interface{}) interface{} {
 func atLeastOneRecipient(v interface{}) error {
 	req := v.(*model.Request)
 	if len(req.To) == 0 && len(req.Cc) == 0 && len(req.Bcc) == 0 {
-		return errors.New(errorMissingRecipients)
+		return validation.Error{Message: errorMissingRecipients}
 	}
 	return nil
 }
